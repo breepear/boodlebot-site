@@ -941,7 +941,7 @@
       /* Text panel slides up 300px over the robot — sits in front of the canvas */
       .text-panel {
         flex: none;
-        padding: 300px 24px 28px;
+        padding: 120px 24px 28px;
         min-height: auto;
         justify-content: flex-start;
         margin-top: -300px;
@@ -953,9 +953,12 @@
         content: '';
         position: absolute;
         top: 0; left: 0; right: 0; height: 300px;
-        background: linear-gradient(to bottom, transparent 0%, var(--dark) 65%);
+        background: linear-gradient(to bottom, transparent 0%, var(--dark) 45%);
         pointer-events: none;
+        z-index: 0;
       }
+      /* Ensure text content renders above the ::before gradient overlay */
+      .text-panel > * { position: relative; z-index: 1; }
       .eyebrow { margin-bottom: 12px; font-size: 0.68rem; }
       .text-panel h1 { font-size: clamp(1.9rem, 8vw, 2.5rem); margin-bottom: 8px; line-height: 1.08; }
       .text-panel p { display: none; } /* hide body copy — space is tight */

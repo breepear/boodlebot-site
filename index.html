@@ -1,0 +1,1646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BoodleBox | AI Collaboration, Reimagined</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple: #7c5cfc;
+      --teal: #00d4c8;
+      --dark: #080614;
+      --border: rgba(255,255,255,0.07);
+      --muted: #9b91c4;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--dark);
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ── LOADER ──────────────────────────────────── */
+    #loader {
+      position: fixed; inset: 0;
+      background: var(--dark);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.65s ease;
+    }
+    #loader.out { opacity: 0; pointer-events: none; }
+    .loader-ring {
+      width: 40px; height: 40px;
+      border: 2px solid rgba(124,92,252,0.18);
+      border-top-color: var(--purple);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loader-pct {
+      font-size: 0.72rem; color: var(--muted);
+      letter-spacing: 0.12em; text-transform: uppercase; text-align: center;
+    }
+
+    /* ── NAV ─────────────────────────────────────── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      padding: 22px 60px;
+      display: flex; justify-content: space-between; align-items: center;
+      background: linear-gradient(to bottom, rgba(8,6,20,0.94) 0%, transparent 100%);
+      transition: opacity 0.4s ease;
+    }
+    .wordmark img { height: 28px; width: auto; display: block; }
+    .nav-btn {
+      background: rgba(124,92,252,0.12);
+      border: 1px solid rgba(124,92,252,0.32);
+      color: #fff; padding: 10px 26px; border-radius: 100px;
+      font-size: 0.875rem; font-weight: 600; cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .nav-btn:hover { background: rgba(124,92,252,0.28); border-color: rgba(124,92,252,0.6); }
+
+    /* ── FLOATING NAV (appears after hero) ──────── */
+    #float-nav {
+      position: fixed; top: 18px; left: 50%; transform: translateX(-50%) translateY(-12px);
+      z-index: 300;
+      display: flex; align-items: center; gap: 0;
+      background: rgba(14, 10, 32, 0.88);
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 18px;
+      padding: 10px 14px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.45s ease, transform 0.45s ease;
+      white-space: nowrap;
+    }
+    #float-nav.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+    .fn-logo img { height: 26px; width: auto; display: block; }
+    .fn-links {
+      display: flex; align-items: center; gap: 2px;
+      margin: 0 18px;
+    }
+    .fn-links a {
+      color: rgba(255,255,255,0.72);
+      font-size: 0.875rem; font-weight: 500;
+      text-decoration: none;
+      padding: 7px 14px; border-radius: 10px;
+      transition: color 0.2s, background 0.2s;
+    }
+    .fn-links a:hover { color: #fff; background: rgba(255,255,255,0.07); }
+    .fn-actions { display: flex; align-items: center; gap: 8px; }
+    .fn-signup {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.18);
+      color: #fff; padding: 8px 20px; border-radius: 10px;
+      font-size: 0.875rem; font-weight: 600; cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .fn-signup:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.3); }
+    .fn-login {
+      background: #9981e2;
+      border: none;
+      color: #fff; padding: 8px 22px; border-radius: 10px;
+      font-size: 0.875rem; font-weight: 700; cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .fn-login:hover { background: #8570d4; transform: translateY(-1px); }
+
+    /* ── SCROLL ZONE — the hero ──────────────────── */
+    #scroll-zone { position: relative; height: 200vh; }
+
+    .sticky-stage {
+      position: sticky; top: 0; height: 100vh;
+      display: grid;
+      grid-template-columns: 46% 54%;
+      overflow: hidden;
+      z-index: 2;
+      will-change: opacity;
+      background:
+        radial-gradient(ellipse 90% 80% at 25% 50%, rgba(44,18,110,0.6) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 55% at 90% 20%, rgba(0,180,160,0.07) 0%, transparent 55%),
+        var(--dark);
+    }
+
+    /* ── TEXT PANEL ──────────────────────────────── */
+    .text-panel {
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 90px 48px 80px 68px;
+    }
+
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(124,92,252,0.12);
+      border: 1px solid rgba(124,92,252,0.25);
+      color: #c4b8ff;
+      padding: 6px 16px; border-radius: 100px;
+      font-size: 0.74rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      margin-bottom: 36px; width: fit-content;
+    }
+    .dot-live {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--purple);
+      animation: pulse 2.2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50% { opacity:0.3; transform:scale(0.6); }
+    }
+
+    .text-panel h1 {
+      font-size: clamp(3.6rem, 6vw, 6rem);
+      font-weight: 900; letter-spacing: -0.045em; line-height: 1.02;
+      margin-bottom: 28px;
+    }
+    .text-panel p {
+      color: var(--muted);
+      font-size: clamp(1rem, 1.6vw, 1.2rem);
+      line-height: 1.65; max-width: 420px;
+      margin-bottom: 44px;
+    }
+    .grad {
+      background: linear-gradient(130deg, #b09dff 0%, #00d4c8 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* CTA button (used inline in stages) */
+    .btn {
+      display: inline-block;
+      align-self: flex-start;
+      background: #9981e2;
+      color: #fff; border: none;
+      padding: 14px 34px; border-radius: 100px;
+      font-size: 0.98rem; font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 0 44px rgba(124,92,252,0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 52px rgba(124,92,252,0.6); }
+
+    /* ── SOCIAL PROOF ────────────────────────────── */
+    .social-proof {
+      display: flex; align-items: center; gap: 14px;
+      margin-top: 28px;
+    }
+    .avatar-stack {
+      display: flex; align-items: center;
+    }
+    .avatar-stack img {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 2px solid rgba(8,6,20,0.9);
+      object-fit: cover;
+      margin-left: -10px;
+    }
+    .avatar-stack img:first-child { margin-left: 0; }
+    .proof-text { display: flex; flex-direction: column; gap: 2px; }
+    .proof-stars { display: flex; align-items: center; gap: 5px; }
+    .proof-stars svg { width: 13px; height: 13px; }
+    .proof-rating { font-size: 0.78rem; font-weight: 700; color: #fff; }
+    .proof-label { font-size: 0.75rem; color: var(--muted); }
+
+    /* ── BOT PANEL ───────────────────────────────── */
+    .bot-panel {
+      position: relative;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .glow {
+      position: absolute;
+      width: 520px; height: 520px; border-radius: 50%;
+      background: radial-gradient(ellipse at center,
+        rgba(90,55,210,0.22) 0%, rgba(0,200,200,0.06) 50%, transparent 72%);
+      animation: breathe 4.5s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes breathe { 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+
+    #bot-canvas { display: block; position: relative; z-index: 1; }
+
+    /* Bottom fade — dissolves hero into page background */
+    .sticky-stage::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 35%;
+      background: linear-gradient(to bottom, transparent, var(--dark));
+      pointer-events: none; z-index: 10;
+    }
+
+    /* Progress bar */
+    .bot-prog {
+      position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 12px; z-index: 20;
+    }
+    .prog-label { font-size: 0.64rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; }
+    .prog-track { width: 100px; height: 1.5px; background: rgba(255,255,255,0.1); border-radius: 1px; overflow: hidden; }
+    .prog-fill { height: 100%; width: 0%; background: linear-gradient(to right, var(--purple), var(--teal)); }
+
+    /* Scroll hint */
+    .scroll-hint {
+      position: absolute; bottom: 38px; right: 44px; z-index: 20;
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      color: var(--muted); font-size: 0.66rem; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      transition: opacity 0.5s ease;
+    }
+    .scroll-hint.hidden { opacity: 0; pointer-events: none; }
+    .sh-line {
+      width: 1px; height: 38px;
+      background: linear-gradient(to bottom, var(--purple), transparent);
+      animation: drip 2s ease-in-out infinite;
+    }
+    @keyframes drip {
+      0% { transform:scaleY(0); transform-origin:top; }
+      49%{ transform:scaleY(1); transform-origin:top; }
+      50%{ transform-origin:bottom; }
+      100%{ transform:scaleY(0); transform-origin:bottom; }
+    }
+
+    /* ── CHAT BUBBLES ────────────────────────────── */
+    .chat-bubble {
+      position: absolute;
+      background: rgba(12, 7, 28, 0.82);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(153, 129, 226, 0.28);
+      border-radius: 20px;
+      padding: 9px 15px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06);
+      opacity: 0;
+    }
+    .chat-bubble .cb-icon { font-size: 0.95rem; line-height: 1; }
+    .chat-bubble .cb-text { color: rgba(255,255,255,0.9); }
+
+    /* Tail: small triangle pointing toward bot center */
+    .chat-bubble::after {
+      content: '';
+      position: absolute;
+      width: 8px; height: 8px;
+      background: rgba(12, 7, 28, 0.82);
+      border: 1px solid rgba(153, 129, 226, 0.28);
+    }
+    .tail-r::after { /* tail on right side, pointing right */
+      right: -5px; top: 50%; transform: translateY(-50%) rotate(45deg);
+      border-left: none; border-bottom: none;
+    }
+    .tail-l::after { /* tail on left side, pointing left */
+      left: -5px; top: 50%; transform: translateY(-50%) rotate(45deg);
+      border-right: none; border-top: none;
+    }
+    .tail-b::after { /* tail on bottom */
+      bottom: -5px; left: 50%; transform: translateX(-50%) rotate(45deg);
+      border-left: none; border-top: none;
+    }
+
+    @keyframes bubbleIn {
+      from { opacity: 0; transform: scale(0.84) translateY(10px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes floatA { 0%,100%{transform:translateY(0)}    50%{transform:translateY(-9px)} }
+    @keyframes floatB { 0%,100%{transform:translateY(-4px)} 50%{transform:translateY(5px)}  }
+    @keyframes floatC { 0%,100%{transform:translateY(0)}    50%{transform:translateY(-6px)} }
+
+    .cb1 { top: 18%;   left: 4%;
+      animation: bubbleIn .5s ease-out .3s forwards, floatA 4.1s ease-in-out 0.8s infinite; }
+    .cb2 { top: 22%;  right: 5%;
+      animation: bubbleIn .5s ease-out .6s forwards, floatB 3.7s ease-in-out 1.1s infinite; }
+    .cb3 { top: 48%;  left: 2%;
+      animation: bubbleIn .5s ease-out .9s forwards, floatC 4.8s ease-in-out 1.4s infinite; }
+    .cb4 { bottom: 26%; right: 4%;
+      animation: bubbleIn .5s ease-out 1.2s forwards, floatA 3.4s ease-in-out 1.7s infinite; }
+    .cb5 { bottom: 22%;  left: 7%;
+      animation: bubbleIn .5s ease-out 1.5s forwards, floatB 5.1s ease-in-out 2.0s infinite; }
+
+    @media (max-width: 800px) { .chat-bubble { display: none; } }
+
+    /* ── SHARED SECTION HELPERS ─────────────────── */
+    .sec-wrap { max-width: 1200px; margin: 0 auto; padding: 0 60px; }
+    .sec-label {
+      text-align: center; font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--purple); margin-bottom: 14px;
+    }
+    .sec-title {
+      text-align: center; font-size: clamp(2rem, 4.5vw, 3.4rem);
+      font-weight: 900; letter-spacing: -0.04em; line-height: 1.05;
+      margin-bottom: 16px;
+    }
+    .sec-sub {
+      text-align: center; color: var(--muted); font-size: 1.05rem;
+      max-width: 500px; margin: 0 auto 64px; line-height: 1.65;
+    }
+
+    /* ── LOGO STRIP ──────────────────────────────── */
+    .logo-strip {
+      padding: 80px 0 90px;
+      margin-top: -480px;
+      position: relative; z-index: 1;
+    }
+    .logo-strip::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 200px;
+      background: linear-gradient(to bottom, var(--dark), transparent);
+      pointer-events: none; z-index: 2;
+    }
+    .logo-strip p {
+      text-align: center; color: var(--muted); font-size: 0.82rem;
+      letter-spacing: 0.06em; margin-bottom: 40px;
+    }
+    .logo-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 12px; max-width: 1060px; margin: 0 auto; padding: 0 60px;
+    }
+    .logo-box {
+      border: 1px solid var(--border); border-radius: 14px;
+      padding: 20px 28px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.02);
+      transition: border-color 0.25s, background 0.25s;
+      min-height: 76px;
+    }
+    .logo-box:hover { border-color: rgba(153,129,226,0.3); background: rgba(255,255,255,0.04); }
+    .logo-box img, .logo-box svg {
+      max-height: 36px; max-width: 140px;
+      width: auto; height: auto;
+      filter: brightness(0) invert(1);
+      opacity: 0.7;
+      transition: opacity 0.25s;
+      object-fit: contain;
+    }
+    .logo-box:hover img, .logo-box:hover svg { opacity: 1; }
+
+    /* ── SECURITY ────────────────────────────────── */
+    .security-sec {
+      padding: 110px 0;
+      position: relative; overflow: hidden;
+    }
+    /* Subtle grid background */
+    .security-sec::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(124,92,252,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(124,92,252,0.06) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+      pointer-events: none;
+    }
+    .security-inner {
+      max-width: 1200px; margin: 0 auto; padding: 0 60px;
+      position: relative; z-index: 1;
+    }
+    .security-top {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 80px; align-items: center; margin-bottom: 80px;
+    }
+    .security-headline { }
+    .security-headline .sec-label { text-align: left; margin-bottom: 16px; }
+    .security-headline h2 {
+      font-size: clamp(2.4rem, 4vw, 3.6rem); font-weight: 900;
+      letter-spacing: -0.045em; line-height: 1.05; margin-bottom: 20px;
+    }
+    .security-headline p {
+      color: var(--muted); font-size: 1.05rem; line-height: 1.7; max-width: 420px;
+    }
+    /* Big "no training" badge */
+    .no-train-badge {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      border: 1px solid rgba(153,129,226,0.2);
+      border-radius: 28px;
+      background: linear-gradient(145deg, rgba(44,18,110,0.3) 0%, rgba(8,6,20,0.8) 100%);
+      padding: 48px 40px; text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .no-train-badge::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 70% 60% at 50% 0%, rgba(124,92,252,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .ntb-shield {
+      font-size: 3rem; margin-bottom: 16px; display: block;
+      filter: drop-shadow(0 0 20px rgba(124,92,252,0.5));
+    }
+    .ntb-title {
+      font-size: 1.5rem; font-weight: 900; letter-spacing: -0.03em;
+      color: #fff; margin-bottom: 8px;
+    }
+    .ntb-sub {
+      font-size: 0.85rem; color: var(--muted); line-height: 1.5; max-width: 220px;
+    }
+    .ntb-pill {
+      margin-top: 20px;
+      background: rgba(0,212,200,0.1); border: 1px solid rgba(0,212,200,0.25);
+      color: #00d4c8; font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      padding: 5px 14px; border-radius: 100px;
+    }
+    /* Cert badges row */
+    .security-certs {
+      display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 48px;
+    }
+    .cert-badge {
+      display: flex; align-items: center; gap: 10px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px; padding: 12px 18px;
+      background: rgba(255,255,255,0.03);
+      font-size: 0.82rem; font-weight: 600; color: rgba(255,255,255,0.85);
+    }
+    .cert-badge .cb-icon { font-size: 1.1rem; }
+    /* Security pillars grid */
+    .security-pillars {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+    }
+    .pillar-card {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.02);
+      padding: 26px 22px;
+      transition: border-color 0.25s, background 0.25s;
+    }
+    .pillar-card:hover { border-color: rgba(153,129,226,0.28); background: rgba(255,255,255,0.04); }
+    .pillar-icon {
+      width: 38px; height: 38px; border-radius: 10px;
+      background: rgba(124,92,252,0.1); border: 1px solid rgba(124,92,252,0.18);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; margin-bottom: 16px;
+    }
+    .pillar-card h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.01em; }
+    .pillar-card p  { font-size: 0.82rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── BENTO ───────────────────────────────────── */
+    .bento-sec { padding: 100px 0; }
+    .bento-sec .sec-title { text-align: center; max-width: 960px; margin: 0 auto 16px; }
+    .bento-sec .sec-sub { margin-bottom: 60px; }
+    .bento-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: 420px 420px;
+      gap: 14px;
+      max-width: 1200px; margin: 0 auto; padding: 0 60px;
+    }
+    .bc-1 { grid-column: 1;     grid-row: 1; }
+    .bc-2 { grid-column: 2 / 4; grid-row: 1; }
+    .bc-3 { grid-column: 1 / 3; grid-row: 2; }
+    .bc-4 { grid-column: 3;     grid-row: 2; }
+
+    .bento-card {
+      border-radius: 22px; border: 1px solid var(--border);
+      background: rgba(255,255,255,0.025);
+      overflow: hidden; position: relative;
+      display: flex; flex-direction: column;
+      transition: border-color 0.3s;
+    }
+    .bento-card:hover { border-color: rgba(153,129,226,0.3); }
+    .bento-visual {
+      flex: 1; position: relative; overflow: hidden;
+      background: linear-gradient(135deg, rgba(44,18,110,0.5) 0%, rgba(12,7,28,0.8) 100%);
+    }
+    .bento-text { padding: 26px 28px 28px; }
+    .bento-text h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.01em; }
+    .bento-text p  { color: var(--muted); font-size: 0.88rem; line-height: 1.6; }
+
+    /* Mock UI inside bento cards */
+    .mock-dash {
+      position: absolute; inset: 20px 0 0 20px;
+      background: rgba(8,6,20,0.75); border-radius: 12px 0 0 0;
+      border: 1px solid rgba(255,255,255,0.07); padding: 16px;
+      display: flex; gap: 12px;
+    }
+    .mock-sidebar { width: 110px; display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+    .mock-nav-item {
+      font-size: 0.7rem; color: rgba(255,255,255,0.4); padding: 6px 10px; border-radius: 7px;
+    }
+    .mock-nav-item.active {
+      background: rgba(153,129,226,0.18); color: #c4b8ff; font-weight: 600;
+    }
+    .mock-main { flex: 1; display: flex; flex-direction: column; gap: 10px; }
+    .mock-stat { font-size: 0.72rem; color: var(--muted); }
+    .mock-stat strong { color: #fff; font-size: 1.3rem; font-weight: 800; display: block; }
+    .mock-bars {
+      display: flex; align-items: flex-end; gap: 4px; height: 60px; margin-top: auto;
+    }
+    .mock-bar {
+      flex: 1; border-radius: 4px 4px 0 0;
+      background: linear-gradient(to top, var(--purple), rgba(153,129,226,0.3));
+    }
+    .mock-right-panel {
+      position: absolute; right: 20px; top: 20px; bottom: 0;
+      width: 44%; background: rgba(30,20,60,0.6); border-radius: 12px 12px 0 0;
+      border: 1px solid rgba(255,255,255,0.06); padding: 14px;
+    }
+    .mock-rp-label { font-size: 0.68rem; color: var(--muted); margin-bottom: 4px; }
+    .mock-rp-val { font-size: 1.5rem; font-weight: 800; color: #fff; }
+    .mock-rp-sub { font-size: 0.65rem; color: #00d4c8; margin-bottom: 12px; }
+    .mock-line-chart { height: 60px; position: relative; }
+    .mock-line-chart svg { width: 100%; height: 100%; }
+
+    .mock-chart {
+      position: absolute; inset: 0;
+      background: rgba(8,6,20,0.7); border-radius: 14px 14px 0 0;
+      border: 1px solid rgba(255,255,255,0.07);
+      display: flex; flex-direction: column;
+    }
+    .mock-chart-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 18px 18px 14px; flex-shrink: 0; }
+    .mock-chart-metric { font-size: 0.7rem; color: var(--muted); }
+    .mock-chart-metric strong { font-size: 1.6rem; color: #fff; font-weight: 800; display: block; }
+    .mock-chart-badge { font-size: 0.65rem; color: #00d4c8; background: rgba(0,212,200,0.1); padding: 3px 8px; border-radius: 100px; }
+    .mock-area { flex: 1; min-height: 0; }
+    .mock-area svg { width: 100%; height: 100%; display: block; }
+
+    .mock-bots {
+      position: absolute; inset: 20px 20px 0;
+      display: flex; flex-direction: column; gap: 8px; padding: 16px;
+      background: rgba(8,6,20,0.7); border-radius: 14px 14px 0 0;
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+    .mock-bot-row {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(255,255,255,0.04); border-radius: 10px; padding: 9px 12px;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .mock-bot-avatar { width: 28px; height: 28px; border-radius: 8px; background: linear-gradient(135deg, var(--purple), var(--teal)); flex-shrink: 0; }
+    .mock-bot-info { flex: 1; }
+    .mock-bot-name { font-size: 0.72rem; font-weight: 600; color: #fff; }
+    .mock-bot-sub  { font-size: 0.62rem; color: var(--muted); }
+    .mock-bot-badge { font-size: 0.6rem; color: #c4b8ff; background: rgba(153,129,226,0.15); padding: 2px 7px; border-radius: 100px; }
+
+    .mock-models {
+      position: absolute; inset: 20px 20px 0;
+      background: rgba(8,6,20,0.7); border-radius: 14px 14px 0 0;
+      border: 1px solid rgba(255,255,255,0.07); padding: 18px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .mock-model-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 12px; border-radius: 10px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.05);
+    }
+    .mock-model-name { font-size: 0.78rem; font-weight: 600; color: rgba(255,255,255,0.85); }
+    .mock-model-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    /* ── FEATURE LIST ────────────────────────────── */
+    .feat-list { padding: 110px 0; }
+    .feat-list-inner { max-width: 1200px; margin: 0 auto; padding: 0 60px; }
+    .feat-list-header {
+      display: grid; grid-template-columns: 1fr 2fr; gap: 60px; align-items: start; margin-bottom: 72px;
+    }
+    .feat-list-header h2 {
+      font-size: clamp(2.4rem, 4vw, 3.8rem); font-weight: 900;
+      letter-spacing: -0.045em; line-height: 1.05;
+    }
+    .feat-list-header p { color: var(--muted); font-size: 1rem; line-height: 1.7; padding-top: 8px; }
+    .feat-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;
+    }
+    .feat-item {
+      padding: 28px 0; border-top: 1px solid var(--border);
+      padding-right: 32px;
+    }
+    .feat-item:nth-child(3n) { padding-right: 0; }
+    .feat-item-icon {
+      font-size: 1.1rem; margin-bottom: 12px; display: block;
+      width: 36px; height: 36px; border-radius: 10px;
+      background: rgba(124,92,252,0.1); border: 1px solid rgba(124,92,252,0.18);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 16px;
+    }
+    .feat-item h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.01em; }
+    .feat-item p  { color: var(--muted); font-size: 0.85rem; line-height: 1.65; }
+
+    /* ── TESTIMONIAL ─────────────────────────────── */
+    .testi-sec {
+      padding: 100px 0 0;
+      overflow: hidden;
+    }
+    .testi-heading {
+      text-align: center; margin-bottom: 70px; padding: 0 60px;
+    }
+    .testi-heading h2 {
+      font-size: clamp(2.6rem, 6vw, 5rem); font-weight: 900;
+      letter-spacing: -0.045em; line-height: 1; margin-bottom: 20px;
+    }
+    .testi-heading p {
+      color: var(--muted); font-size: 1.05rem; line-height: 1.65; max-width: 420px; margin: 0 auto;
+    }
+    .testi-grid-wrap {
+      position: relative; width: 100%;
+    }
+    /* Grid lines overlay */
+    .testi-grid-lines {
+      position: absolute; inset: 0; pointer-events: none;
+      display: grid; grid-template-columns: repeat(4, 1fr);
+    }
+    .tgl-col { border-left: 1px solid rgba(255,255,255,0.05); }
+    .tgl-col:last-child { border-right: 1px solid rgba(255,255,255,0.05); }
+    .testi-grid-h {
+      position: absolute; left: 0; right: 0; height: 1px;
+      background: rgba(255,255,255,0.05);
+    }
+    .testi-content {
+      display: grid; grid-template-columns: 1fr 1.5fr;
+      gap: 0; align-items: center;
+      max-width: 1200px; margin: 0 auto;
+      padding: 0 60px 100px;
+      position: relative; z-index: 1;
+    }
+    .testi-photo-wrap { padding-right: 60px; }
+    .testi-photo-card {
+      border-radius: 18px; overflow: hidden;
+      aspect-ratio: 3/4;
+      background: linear-gradient(160deg, rgba(100,60,220,0.65) 0%, rgba(40,15,100,0.95) 100%);
+      position: relative;
+    }
+    .testi-photo-card img {
+      width: 100%; height: 100%; object-fit: cover;
+      position: absolute; inset: 0;
+      mix-blend-mode: luminosity; opacity: 0.7;
+    }
+    .testi-photo-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(160deg, rgba(100,60,220,0.45) 0%, rgba(40,10,100,0.25) 100%);
+    }
+    .testi-photo-placeholder {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 8rem;
+      background: linear-gradient(160deg, rgba(100,60,220,0.6) 0%, rgba(40,15,100,0.95) 100%);
+    }
+    .testi-text { padding: 20px 0 20px 10px; }
+    .testi-quote-mark {
+      font-size: 6rem; line-height: 1; color: rgba(153,129,226,0.25);
+      font-family: Georgia, serif; display: block; margin-bottom: 16px;
+      letter-spacing: -0.05em;
+    }
+    .testi-quote {
+      font-size: clamp(1.3rem, 2.5vw, 1.9rem); font-weight: 600;
+      line-height: 1.45; color: rgba(255,255,255,0.95);
+      margin-bottom: 40px; letter-spacing: -0.02em;
+    }
+    .testi-byline { display: flex; align-items: center; gap: 14px; }
+    .testi-byline-dot {
+      width: 36px; height: 2px; border-radius: 1px; flex-shrink: 0;
+      background: linear-gradient(to right, var(--purple), var(--teal));
+    }
+    .testi-name { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 4px; }
+    .testi-role { font-size: 0.83rem; color: var(--muted); }
+
+    /* ── TESTIMONIAL COLUMNS ─────────────────────── */
+    .tc-sec { padding: 110px 0; overflow: hidden; }
+    .tc-header {
+      text-align: center; max-width: 540px; margin: 0 auto 60px;
+      padding: 0 60px;
+    }
+    .tc-badge {
+      display: inline-block;
+      border: 1px solid var(--border);
+      border-radius: 8px; padding: 4px 16px;
+      font-size: 0.8rem; color: var(--muted);
+      margin-bottom: 20px;
+    }
+    .tc-header h2 {
+      font-size: clamp(2rem, 4vw, 3rem); font-weight: 900;
+      letter-spacing: -0.04em; line-height: 1.05; margin-bottom: 14px;
+    }
+    .tc-header p { color: var(--muted); font-size: 1rem; line-height: 1.65; }
+    .tc-columns {
+      display: flex; justify-content: center; gap: 20px;
+      max-height: 740px; overflow: hidden;
+      -webkit-mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
+      mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
+      padding: 0 60px;
+    }
+    .tc-col { flex: 0 0 300px; }
+    .tc-col-2 { display: none; }
+    .tc-col-3 { display: none; }
+    @media (min-width: 768px) { .tc-col-2 { display: block; } }
+    @media (min-width: 1024px) { .tc-col-3 { display: block; } }
+    .tc-track {
+      display: flex; flex-direction: column; gap: 20px;
+      animation: tc-scroll linear infinite;
+    }
+    .tc-col-1 .tc-track { animation-duration: 15s; }
+    .tc-col-2 .tc-track { animation-duration: 19s; }
+    .tc-col-3 .tc-track { animation-duration: 17s; }
+    @keyframes tc-scroll {
+      from { transform: translateY(0); }
+      to   { transform: translateY(-50%); }
+    }
+    .tc-card {
+      background: rgba(255,255,255,0.025);
+      border: 1px solid var(--border);
+      border-radius: 20px; padding: 28px 26px;
+      transition: border-color 0.25s;
+    }
+    .tc-card:hover { border-color: rgba(153,129,226,0.3); }
+    .tc-card-text { font-size: 0.88rem; color: rgba(255,255,255,0.8); line-height: 1.65; margin-bottom: 20px; }
+    .tc-card-author { display: flex; align-items: center; gap: 12px; }
+    .tc-card-author img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+    .tc-card-name { font-size: 0.85rem; font-weight: 600; color: #fff; line-height: 1.3; }
+    .tc-card-role { font-size: 0.75rem; color: var(--muted); line-height: 1.3; }
+
+    /* ── PRICING ─────────────────────────────────── */
+    .pricing-sec { padding: 110px 0; }
+    .pricing-toggle-wrap {
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px; margin-bottom: 56px;
+    }
+    .pricing-toggle-wrap span { font-size: 0.875rem; color: var(--muted); font-weight: 500; }
+    .pricing-toggle-wrap span.active { color: #fff; }
+    .toggle-pill {
+      width: 44px; height: 24px; border-radius: 100px;
+      background: rgba(255,255,255,0.2); position: relative; cursor: pointer;
+      border: none; flex-shrink: 0;
+      transition: background 0.2s;
+    }
+    .toggle-pill.annual { background: var(--purple); }
+    .toggle-pill::after {
+      content: ''; position: absolute;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #fff; top: 3px; left: 3px;
+      transition: transform 0.2s;
+    }
+    .toggle-pill.annual::after { transform: translateX(20px); }
+    .save-badge {
+      font-size: 0.7rem; font-weight: 700; color: #00d4c8;
+      background: rgba(0,212,200,0.12); border: 1px solid rgba(0,212,200,0.2);
+      padding: 2px 9px; border-radius: 100px;
+    }
+    .pricing-grid {
+      display: grid; grid-template-columns: repeat(3, minmax(0, 340px));
+      gap: 16px; margin: 0 auto; padding: 0 60px;
+      align-items: start; justify-content: center;
+    }
+    .pricing-card {
+      border-radius: 24px; border: 1px solid var(--border);
+      background: rgba(255,255,255,0.025);
+      padding: 36px 32px;
+    }
+    .pricing-card.featured {
+      border-color: rgba(153,129,226,0.45);
+      background: linear-gradient(160deg, rgba(60,30,140,0.35) 0%, rgba(12,7,28,0.6) 100%);
+      position: relative;
+    }
+    .pricing-badge {
+      position: absolute; top: -13px; left: 50%; transform: translateX(-50%);
+      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      background: var(--purple); color: #fff;
+      padding: 4px 14px; border-radius: 100px;
+    }
+    .pricing-tier { font-size: 0.78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
+    .pricing-price { font-size: 2.8rem; font-weight: 900; letter-spacing: -0.04em; line-height: 1; margin-bottom: 6px; }
+    .pricing-price span { font-size: 1rem; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+    .pricing-desc { font-size: 0.85rem; color: var(--muted); line-height: 1.55; margin-bottom: 28px; }
+    .pricing-divider { height: 1px; background: var(--border); margin-bottom: 24px; }
+    .pricing-features { list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 32px; }
+    .pricing-features li {
+      font-size: 0.875rem; color: rgba(255,255,255,0.8);
+      display: flex; align-items: flex-start; gap: 10px; line-height: 1.45;
+    }
+    .pricing-features li::before {
+      content: '✓'; color: var(--purple); font-weight: 700; flex-shrink: 0; margin-top: 1px;
+    }
+    .pricing-features li.muted { color: var(--muted); }
+    .pricing-features li.muted::before { color: rgba(255,255,255,0.15); }
+    .pricing-btn {
+      width: 100%; padding: 13px; border-radius: 12px;
+      font-size: 0.9rem; font-weight: 700; cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.15); background: transparent; color: #fff;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .pricing-btn:hover { background: rgba(255,255,255,0.08); }
+    .pricing-btn.primary { background: #9981e2; border-color: #9981e2; }
+    .pricing-btn.primary:hover { background: #8570d4; }
+    .pricing-quote {
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px; padding: 18px 20px; margin-bottom: 24px;
+    }
+    .pricing-quote p {
+      font-size: 0.82rem; color: rgba(255,255,255,0.7); line-height: 1.65;
+      font-style: italic; margin-bottom: 10px;
+    }
+    .pricing-quote span {
+      font-size: 0.75rem; color: var(--purple); font-weight: 600;
+    }
+
+    /* ── CTA EMAIL ───────────────────────────────── */
+    .cta-sec {
+      padding: 20px 60px 100px; position: relative; overflow: hidden;
+    }
+    .cta-inner {
+      max-width: 1080px; margin: 0 auto;
+      background: linear-gradient(140deg, rgba(44,18,110,0.55) 0%, rgba(8,6,20,0.9) 60%);
+      border: 1px solid rgba(153,129,226,0.25);
+      border-radius: 28px; padding: 80px 60px;
+      text-align: center; position: relative; overflow: hidden;
+    }
+    .cta-inner::before {
+      content: ''; position: absolute; top: -40%; left: 50%; transform: translateX(-50%);
+      width: 700px; height: 400px;
+      background: radial-gradient(ellipse, rgba(124,92,252,0.2) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .cta-inner h2 {
+      font-size: clamp(2rem, 4vw, 3.4rem); font-weight: 900;
+      letter-spacing: -0.04em; line-height: 1.05;
+      margin-bottom: 16px; position: relative;
+    }
+    .cta-inner p {
+      color: var(--muted); font-size: 1rem; max-width: 420px;
+      margin: 0 auto 40px; line-height: 1.65; position: relative;
+    }
+    .cta-form {
+      display: flex; gap: 10px; max-width: 460px; margin: 0 auto 16px;
+      position: relative;
+    }
+    .cta-input {
+      flex: 1; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 12px; padding: 13px 18px; color: #fff;
+      font-size: 0.92rem; outline: none;
+      transition: border-color 0.2s;
+    }
+    .cta-input::placeholder { color: var(--muted); }
+    .cta-input:focus { border-color: rgba(153,129,226,0.5); }
+    .cta-hint { font-size: 0.75rem; color: var(--muted); }
+
+    /* ── FOOTER ──────────────────────────────────── */
+    footer {
+      border-top: 1px solid var(--border); padding: 56px 60px 40px;
+    }
+    .footer-top {
+      display: grid; grid-template-columns: 220px 1fr; gap: 60px; margin-bottom: 48px;
+    }
+    .footer-brand p { color: var(--muted); font-size: 0.85rem; line-height: 1.65; margin-top: 16px; max-width: 180px; }
+    .footer-cols { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+    .footer-col h5 { font-size: 0.8rem; font-weight: 700; color: rgba(255,255,255,0.5); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px; }
+    .footer-col a { display: block; font-size: 0.875rem; color: var(--muted); text-decoration: none; margin-bottom: 10px; transition: color 0.2s; }
+    .footer-col a:hover { color: #fff; }
+    .footer-bottom {
+      display: flex; justify-content: space-between; align-items: center;
+      border-top: 1px solid var(--border); padding-top: 24px;
+      color: var(--muted); font-size: 0.78rem;
+    }
+
+    /* ── RESPONSIVE ──────────────────────────────── */
+    @media (max-width: 900px) {
+      .sticky-stage { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+      .text-panel { padding: 96px 28px 0; min-height: 45vh; }
+      nav { padding: 16px 24px; }
+      .logo-grid { grid-template-columns: repeat(2, 1fr); }
+      .bento-grid { grid-template-columns: 1fr; grid-template-rows: auto; }
+      .bc-1,.bc-2,.bc-3,.bc-4 { grid-column: 1; grid-row: auto; height: 320px; }
+      .feat-list-header { grid-template-columns: 1fr; gap: 20px; }
+      .feat-grid { grid-template-columns: repeat(2, 1fr); }
+      .testi-card { grid-template-columns: 1fr; padding: 0; }
+      .testi-photo { height: 200px; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .footer-top { grid-template-columns: 1fr; }
+      .footer-cols { grid-template-columns: repeat(2, 1fr); }
+      .footer-bottom { flex-direction: column; gap: 10px; text-align: center; }
+      .sec-wrap { padding: 0 28px; }
+      .logo-grid, .bento-grid, .pricing-grid { padding: 0 28px; }
+      .cta-sec { padding: 20px 28px 80px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader">
+  <div>
+    <div class="loader-ring"></div>
+    <div class="loader-pct" id="lpct">Powering up BoodleBot</div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <div class="wordmark"><img src="boodlebox-logo-light.png" alt="BoodleBox"></div>
+  <button class="nav-btn">Get Started Free</button>
+</nav>
+
+<!-- FLOATING NAV -->
+<div id="float-nav">
+  <div class="fn-logo"><img src="boodlebox-logo-light.png" alt="BoodleBox"></div>
+  <div class="fn-links">
+    <a href="#">Features</a>
+    <a href="#">About</a>
+    <a href="#">Blog</a>
+  </div>
+  <div class="fn-actions">
+    <button class="fn-signup">Sign Up</button>
+    <button class="fn-login">Login</button>
+  </div>
+</div>
+
+<!-- SCROLL ZONE — the full hero experience -->
+<div id="scroll-zone">
+  <div class="sticky-stage">
+
+    <!-- TEXT PANEL -->
+    <div class="text-panel">
+
+      <div class="eyebrow"><div class="dot-live"></div>AI Collaboration for Teams &amp; Classrooms</div>
+      <h1>One workspace.<br><span class="grad">Every AI.</span></h1>
+      <p>ChatGPT, Claude, Gemini, Perplexity. All in one place, with your whole team or class. No switching. No compromising. No choosing.</p>
+      <button class="btn">Start for Free</button>
+
+      <div class="social-proof">
+        <div class="avatar-stack">
+          <img src="avatar1.jpg" alt="User">
+          <img src="avatar2.jpg" alt="User">
+          <img src="avatar3.jpg" alt="User">
+          <img src="avatar4.jpg" alt="User">
+        </div>
+        <div class="proof-text">
+          <div class="proof-stars">
+            <svg viewBox="0 0 24 24" fill="#f5c518"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+            <svg viewBox="0 0 24 24" fill="#f5c518"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+            <svg viewBox="0 0 24 24" fill="#f5c518"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+            <svg viewBox="0 0 24 24" fill="#f5c518"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+            <svg viewBox="0 0 24 24" fill="#f5c518"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+            <span class="proof-rating">4.8/5</span>
+          </div>
+          <div class="proof-label">Join 10,000+ users and classrooms</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- BOT PANEL -->
+    <div class="bot-panel">
+      <div class="glow"></div>
+      <canvas id="bot-canvas"></canvas>
+
+      <div class="chat-bubble cb1 tail-r">
+        <span class="cb-icon">⚡</span>
+        <span class="cb-text">10+ AI models in one place</span>
+      </div>
+      <div class="chat-bubble cb2 tail-l">
+        <span class="cb-icon">🤖</span>
+        <span class="cb-text">Build your own Boodle Bots</span>
+      </div>
+      <div class="chat-bubble cb3 tail-r">
+        <span class="cb-icon">📚</span>
+        <span class="cb-text">AI that knows your docs</span>
+      </div>
+      <div class="chat-bubble cb4 tail-l">
+        <span class="cb-icon">🎓</span>
+        <span class="cb-text">Designed for the classroom</span>
+      </div>
+      <div class="chat-bubble cb5 tail-b">
+        <span class="cb-icon">🔒</span>
+        <span class="cb-text">Private &amp; institution-ready</span>
+      </div>
+
+      <div class="bot-prog">
+        <span class="prog-label">BoodleBot</span>
+        <div class="prog-track"><div class="prog-fill" id="pfill"></div></div>
+      </div>
+
+      <div class="scroll-hint" id="scroll-hint">
+        <span>Scroll</span>
+        <div class="sh-line"></div>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /scroll-zone -->
+
+<!-- LOGO STRIP -->
+<section class="logo-strip">
+  <p>Trusted by innovative teams and institutions</p>
+  <div class="logo-grid">
+    <div class="logo-box"><img src="grid-usc-logo-horizontal.svg" alt="USC"></div>
+    <div class="logo-box"><img src="ACC_logo.svg" alt="ACC"></div>
+    <div class="logo-box"><img src="CCA_logo.svg" alt="CCA"></div>
+    <div class="logo-box"><img src="ADP-logo.png" alt="ADP"></div>
+    <div class="logo-box"><img src="furman-logo.webp" alt="Furman University"></div>
+    <div class="logo-box"><img src="george-mason-logo.webp" alt="George Mason University"></div>
+    <div class="logo-box"><img src="cccs-logo.webp" alt="Colorado Community College System"></div>
+    <div class="logo-box"><img src="umaine-logo.webp" alt="University of Maine Fort Kent"></div>
+  </div>
+</section>
+
+<!-- SECURITY -->
+<section class="security-sec">
+  <div class="security-inner">
+
+    <div class="security-top">
+      <div class="security-headline">
+        <div class="sec-label">Security</div>
+        <h2>Enterprise-Grade<br>Security.</h2>
+        <p>Your data stays yours. FERPA compliant, SOC 2 certified, with no training on your data. Ever.</p>
+
+        <div class="security-certs" style="margin-top:32px;">
+          <div class="cert-badge"><span class="cb-icon">🎓</span> FERPA Compliant</div>
+          <div class="cert-badge"><span class="cb-icon">✅</span> SOC 2 Certified</div>
+          <div class="cert-badge"><span class="cb-icon">🔐</span> AES-256 Encryption</div>
+        </div>
+      </div>
+
+      <div class="no-train-badge">
+        <span class="ntb-shield">🛡️</span>
+        <div class="ntb-title">We never train<br>on your data.</div>
+        <div class="ntb-sub">Your conversations, documents, and student activity are never used to train any AI model. Not ours. Not anyone's.</div>
+        <span class="ntb-pill">Zero Data Training. Ever.</span>
+      </div>
+    </div>
+
+    <div class="security-pillars">
+      <div class="pillar-card">
+        <div class="pillar-icon">🔒</div>
+        <h4>No Data Training</h4>
+        <p>Your inputs are never used to train or improve any AI model. Full stop.</p>
+      </div>
+      <div class="pillar-card">
+        <div class="pillar-icon">🏫</div>
+        <h4>FERPA Compliant</h4>
+        <p>Built for education from day one. Student data is protected to the highest federal standard.</p>
+      </div>
+      <div class="pillar-card">
+        <div class="pillar-icon">🛡️</div>
+        <h4>SOC 2 Certified</h4>
+        <p>Independently audited controls covering security, availability, and confidentiality.</p>
+      </div>
+      <div class="pillar-card">
+        <div class="pillar-icon">👁️</div>
+        <h4>Admin Visibility</h4>
+        <p>Full institutional controls over access, permissions, and usage policies across your organization.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- BENTO FEATURES -->
+<section class="bento-sec">
+  <div class="sec-label">Built different</div>
+  <h2 class="sec-title">Harness the power of AI,<br>making collaboration intuitive<br>for every team.</h2>
+  <p class="sec-sub">One platform that unifies every model, every conversation, and every workflow. Teams and classrooms stop switching and start creating.</p>
+  <div class="bento-grid">
+
+    <!-- Card 1: small — multi-model -->
+    <div class="bento-card bc-1">
+      <div class="bento-visual">
+        <div class="mock-models">
+          <div style="font-size:0.7rem;color:var(--muted);margin-bottom:4px;">Active models</div>
+          <div class="mock-model-row"><span class="mock-model-name">GPT-4o</span><span class="mock-model-dot" style="background:#10a37f"></span></div>
+          <div class="mock-model-row"><span class="mock-model-name">Claude 3.5</span><span class="mock-model-dot" style="background:#9981e2"></span></div>
+          <div class="mock-model-row"><span class="mock-model-name">Gemini 1.5</span><span class="mock-model-dot" style="background:#4285f4"></span></div>
+          <div class="mock-model-row"><span class="mock-model-name">Perplexity</span><span class="mock-model-dot" style="background:#e87d2b"></span></div>
+        </div>
+      </div>
+      <div class="bento-text">
+        <h3>10+ models, one place</h3>
+        <p>Switch between ChatGPT, Claude, Gemini, Perplexity and more without leaving your workspace.</p>
+      </div>
+    </div>
+
+    <!-- Card 2: large — dashboard -->
+    <div class="bento-card bc-2">
+      <div class="bento-visual">
+        <div class="mock-dash">
+          <div class="mock-sidebar">
+            <div style="font-size:0.62rem;color:var(--muted);padding:4px 10px;margin-bottom:4px;">WORKSPACE</div>
+            <div class="mock-nav-item active">Overview</div>
+            <div class="mock-nav-item">Chat History</div>
+            <div class="mock-nav-item">My Bots</div>
+            <div class="mock-nav-item">Knowledge</div>
+            <div class="mock-nav-item">Team</div>
+          </div>
+          <div class="mock-main">
+            <div class="mock-stat"><strong>2,847</strong>Messages today</div>
+            <div class="mock-bars">
+              <div class="mock-bar" style="height:35%"></div>
+              <div class="mock-bar" style="height:60%"></div>
+              <div class="mock-bar" style="height:45%"></div>
+              <div class="mock-bar" style="height:80%"></div>
+              <div class="mock-bar" style="height:55%"></div>
+              <div class="mock-bar" style="height:90%"></div>
+              <div class="mock-bar" style="height:70%"></div>
+            </div>
+          </div>
+        </div>
+        <div class="mock-right-panel">
+          <div class="mock-rp-label">Team AI usage</div>
+          <div class="mock-rp-val">94.2%</div>
+          <div class="mock-rp-sub">↑ +12.4% this week</div>
+          <div class="mock-line-chart">
+            <svg viewBox="0 0 200 60" preserveAspectRatio="none">
+              <polyline points="0,55 30,40 60,48 90,25 130,30 160,12 200,18"
+                fill="none" stroke="rgba(153,129,226,0.6)" stroke-width="2"/>
+              <polygon points="0,55 30,40 60,48 90,25 130,30 160,12 200,18 200,60 0,60"
+                fill="rgba(153,129,226,0.08)"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div class="bento-text">
+        <h3>Unified dashboard</h3>
+        <p>Manage all your AI workflows, bots, and team or classroom activity in one clean, powerful interface.</p>
+      </div>
+    </div>
+
+    <!-- Card 3: large — analytics -->
+    <div class="bento-card bc-3">
+      <div class="bento-visual">
+        <div class="mock-chart">
+          <div class="mock-chart-header">
+            <div class="mock-chart-metric"><strong>59.8K</strong>Total messages</div>
+            <span class="mock-chart-badge">+10.7% this month</span>
+          </div>
+          <div class="mock-area">
+            <svg viewBox="0 0 400 300" preserveAspectRatio="none">
+              <polygon points="0,285 40,240 80,258 120,195 170,215 220,140 270,165 320,90 370,115 400,100 400,300 0,300"
+                fill="rgba(124,92,252,0.12)"/>
+              <polyline points="0,285 40,240 80,258 120,195 170,215 220,140 270,165 320,90 370,115 400,100"
+                fill="none" stroke="rgba(124,92,252,0.7)" stroke-width="2.5"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+      <div class="bento-text">
+        <h3>Usage analytics</h3>
+        <p>Visual insights into how your team uses AI — track what's working and optimize in real time.</p>
+      </div>
+    </div>
+
+    <!-- Card 4: small — bot builder -->
+    <div class="bento-card bc-4">
+      <div class="bento-visual">
+        <div class="mock-bots">
+          <div style="font-size:0.7rem;color:var(--muted);margin-bottom:2px;">Your Boodle Bots</div>
+          <div class="mock-bot-row">
+            <div class="mock-bot-avatar"></div>
+            <div class="mock-bot-info"><div class="mock-bot-name">Support Bot</div><div class="mock-bot-sub">Claude 3.5 · 1.2K msgs</div></div>
+            <span class="mock-bot-badge">Live</span>
+          </div>
+          <div class="mock-bot-row">
+            <div class="mock-bot-avatar" style="background:linear-gradient(135deg,#10a37f,#00d4c8)"></div>
+            <div class="mock-bot-info"><div class="mock-bot-name">Research Bot</div><div class="mock-bot-sub">GPT-4o · 847 msgs</div></div>
+            <span class="mock-bot-badge">Live</span>
+          </div>
+          <div class="mock-bot-row" style="opacity:0.5">
+            <div class="mock-bot-avatar" style="background:rgba(255,255,255,0.1)"></div>
+            <div class="mock-bot-info"><div class="mock-bot-name">+ New Bot</div><div class="mock-bot-sub">Configure in minutes</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="bento-text">
+        <h3>Custom Boodle Bots</h3>
+        <p>Build bots tuned to your exact workflow and deploy them to your team or class in minutes.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- FEATURE LIST -->
+<section class="feat-list">
+  <div class="feat-list-inner">
+    <div class="feat-list-header">
+      <h2>Everything<br>your team and<br>classroom needs.</h2>
+      <p>BoodleBox combines the tools educators, teams, and institutions actually need — without the complexity of stitching them together yourself.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat-item">
+        <span class="feat-item-icon">⚡</span>
+        <h4>Multi-Model Chat</h4>
+        <p>Run GPT-4, Claude, Gemini, and Perplexity simultaneously. Compare outputs. Pick the best.</p>
+      </div>
+      <div class="feat-item">
+        <span class="feat-item-icon">📊</span>
+        <h4>Usage Analytics</h4>
+        <p>Visual insights into how your team uses AI — what's working, what's not, what to improve.</p>
+      </div>
+      <div class="feat-item">
+        <span class="feat-item-icon">🤖</span>
+        <h4>Custom Boodle Bots</h4>
+        <p>Build bots tuned to your workflow — your tone, your context, your rules. No engineering needed.</p>
+      </div>
+      <div class="feat-item">
+        <span class="feat-item-icon">📚</span>
+        <h4>Knowledge Bank</h4>
+        <p>Upload your documents and syllabi. Every bot in your workspace gets that context automatically.</p>
+      </div>
+      <div class="feat-item">
+        <span class="feat-item-icon">🎓</span>
+        <h4>Education Tools</h4>
+        <p>Rubrics, assignments, instructor dashboards, and student activity tracking — all built in.</p>
+      </div>
+      <div class="feat-item">
+        <span class="feat-item-icon">🔔</span>
+        <h4>Smart Notifications</h4>
+        <p>Alerts for usage limits, new model releases, and team activity — so nothing slips through.</p>
+      </div>
+      <div class="feat-item">
+        <span class="feat-item-icon">🔗</span>
+        <h4>Integrations</h4>
+        <p>Connect to Canvas, Slack, Google Workspace, and the tools your team already lives in.</p>
+      </div>
+      <div class="feat-item">
+        <span class="feat-item-icon">🔒</span>
+        <h4>Privacy First</h4>
+        <p>Institution-grade security. Built for environments where privacy isn't optional.</p>
+      </div>
+      <div class="feat-item">
+        <span class="feat-item-icon">👥</span>
+        <h4>True Collaboration</h4>
+        <p>Group chats where AI works alongside your team or class. Instructors, students, colleagues. One workspace.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIAL -->
+<section class="testi-sec">
+  <div class="testi-heading">
+    <h2>Our clients</h2>
+    <p>Hear firsthand how BoodleBox has transformed AI collaboration for teams and classrooms like yours.</p>
+  </div>
+  <div class="testi-grid-wrap">
+    <!-- Subtle grid lines -->
+    <div class="testi-grid-lines">
+      <div class="tgl-col"></div>
+      <div class="tgl-col"></div>
+      <div class="tgl-col"></div>
+      <div class="tgl-col"></div>
+    </div>
+    <div class="testi-grid-h" style="top: 0"></div>
+    <div class="testi-grid-h" style="bottom: 100px"></div>
+
+    <div class="testi-content">
+      <div class="testi-photo-wrap">
+        <div class="testi-photo-card">
+          <img src="testimonial-photo.png" alt="Dr. Robert Corso">
+          <div class="testi-photo-overlay"></div>
+        </div>
+      </div>
+      <div class="testi-text">
+        <span class="testi-quote-mark">&#8220;</span>
+        <p class="testi-quote">This product has completely transformed how I manage my team's AI workflows and deadlines</p>
+        <div class="testi-byline">
+          <div class="testi-byline-dot"></div>
+          <div>
+            <div class="testi-name">Dr. Robert Corso</div>
+            <div class="testi-role">Director of Educational Technology · Stanford Online</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIAL COLUMNS -->
+<section class="tc-sec">
+  <div class="tc-header">
+    <div class="tc-badge">Testimonials</div>
+    <h2>What our users say</h2>
+    <p>Hear from the educators, teams, and students transforming how they work with AI.</p>
+  </div>
+  <div class="tc-columns">
+
+    <!-- Column 1 -->
+    <div class="tc-col tc-col-1">
+      <div class="tc-track">
+        <div class="tc-card"><p class="tc-card-text">"BoodleBox changed how our entire department uses AI. Having every model in one place saves hours every week."</p><div class="tc-card-author"><img src="https://randomuser.me/api/portraits/women/1.jpg" alt="Dr. Sarah Mitchell"><div><div class="tc-card-name">Dr. Sarah Mitchell</div><div class="tc-card-role">Professor, Stanford University</div></div></div></div>
+        <div class="tc-card"><p class="tc-card-text">"My students are more engaged than ever. BoodleBox makes AI accessible without compromising academic integrity."</p><div class="tc-card-author"><img src="https://randomuser.me/api/portraits/men/2.jpg" alt="James Thornton"><div><div class="tc-card-name">James Thornton</div><div class="tc-card-role">High School Teacher</div></div></div></div>
+        <div class="tc-card"><p class="tc-card-text">"The privacy guarantees were exactly what our institution needed. FERPA compliance out of the box was a dealbreaker."</p><div class="tc-card-author"><img src="https://randomuser.me/api/portraits/women/3.jpg" alt="Priya Nair"><div><div class="tc-card-name">Priya Nair</div><div class="tc-card-role">Director of Technology, ACC</div></div></div></div>
+        <!-- duplicate for seamless loop -->
+        <div class="tc-card"><p class="tc-card-text">"BoodleBox changed how our entire department uses AI. Having every model in one place saves hours every week."</p><div class="tc-card-author"><img src="https://randomuser.me/api/portraits/women/1.jpg" alt="Dr. Sarah Mitchell"><div><div class="tc-card-name">Dr. Sarah Mitchell</div><div class="tc-card-role">Professor, Stanford University</div></div></div></div>
+        <div class="tc-card"><p class="tc-card-text">"My students are more engaged than ever. BoodleBox makes AI accessible without compromising academic integrity."</p><div class="tc-card-author"><img src="https://randomuser.me/api/portraits/men/2.jpg" alt="James Thornton"><div><div class="tc-card-name">James Thornton</div><div class="tc-card-role">High School Teacher</div></div></div></div>
+        <div class="tc-card"><p class="tc-card-text">"The privacy guarantees were exactly what our institution needed. FERPA compliance out of the box was a dealbreaker."</p><div class="tc-card-author"><img src="https://randomuser.me/api/portraits/women/3.jpg" alt="Priya Nair"><div><div class="tc-card-name">Priya Nair</div><div class="tc-card-role">Director of Technology, ACC</div></div></div></div>
+      </div>
+    </div>
+
+    <!-- Column 2 -->
+    <div class="tc-col tc-col-2">
+      <div class="tc-track">
+        <div class="tc-card"><p class="tc-card-text">"We switched from three separate AI tools to BoodleBox and our team's productivity doubled in the first month."</p><div class="tc-card-author"><img src="https://randomuser.me/api/portraits/men/4.jpg" alt="Marcus Johnson"><div><div class="tc-card-name">Marcus Johnson</div><div class="tc-card-role">Operations Lead</div></div></div></div>
+        <div class="tc-card"><p class="tc-card-text">"The custom Boodle Bots are incredible. I built one for grading rubrics and it saves me five hours a week."</p><div class="tc-card-author"><img src="https://randomuser.me/api/portraits/women/5.jpg" alt="Elena Rodriguez"><div><div class="tc-card-name">Elena Rodriguez</div><div class="tc-card-role">Associate Professor</div></div></div></div>
+        <div class="tc-card"><p class="tc-card-text">"Rolling this out campus-wide was smoother than any ed-tech deployment I've done in 15 years."</p><div class="tc-card-author"><img src="https://randomuser.me/api/portraits/men/6.jpg" alt="David Park"><div><div class="tc-card-name">David Park</div><div class="tc-card-role">VP of Academic Innovation</div></div></div></div>
+        <!-- duplicate -->
+        <div class="tc-card"><p class="tc-card-text">"We switched from three separate AI tools to BoodleBox and our team's productivity doubled in the first month."</p><div class="tc-card-author"><img src="https://randomuser.me/api/portraits/men/4.jpg" alt="Marcus Johnson"><div><div class="tc-card-name">Marcus Johnson</div><div class="tc-card-role">Operations Lead</div></div></div></div>
+        <div class="tc-card"><p class="tc-card-text">"The custom Boodle Bots are incredible. I built one for grading rubrics and it saves me five hours a week."</p><div class="tc-card-author"><img src="https://randomuser.me/api/portraits/women/5.jpg" alt="Elena Rodriguez"><div><div class="tc-card-name">Elena Rodriguez</div><div class="tc-card-role">Associate Professor</div></div></div></div>
+        <div class="tc-card"><p class="tc-card-text">"Rolling this out campus-wide was smoother than any ed-tech deployment I've done in 15 years."</p><div class="tc-card-author"><img src="https://randomuser.me/api/portraits/men/6.jpg" alt="David Park"><div><div class="tc-card-name">David Park</div><div class="tc-card-role">VP of Academic Innovation</div></div></div></div>
+      </div>
+    </div>
+
+    <!-- Column 3 -->
+    <div class="tc-col tc-col-3">
+      <div class="tc-track">
+        <div class="tc-card"><p class="tc-card-text">"Comparing Claude, ChatGPT, and Gemini side by side in one tab is something no other tool offers. Absolute game changer."</p><div class="tc-card-author"><img src="https://randomuser.me/api/portraits/women/7.jpg" alt="Aisha Williams"><div><div class="tc-card-name">Aisha Williams</div><div class="tc-card-role">Graduate Researcher</div></div></div></div>
+        <div class="tc-card"><p class="tc-card-text">"Our team adopted BoodleBox in a single afternoon. The interface is intuitive and onboarding is seamless."</p><div class="tc-card-author"><img src="https://randomuser.me/api/portraits/men/8.jpg" alt="Tom Erikson"><div><div class="tc-card-name">Tom Erikson</div><div class="tc-card-role">Creative Director</div></div></div></div>
+        <div class="tc-card"><p class="tc-card-text">"Knowing our data is never used for training was the deciding factor. We trust BoodleBox with sensitive research."</p><div class="tc-card-author"><img src="https://randomuser.me/api/portraits/women/9.jpg" alt="Dr. Lena Fischer"><div><div class="tc-card-name">Dr. Lena Fischer</div><div class="tc-card-role">Research Director, Furman University</div></div></div></div>
+        <!-- duplicate -->
+        <div class="tc-card"><p class="tc-card-text">"Comparing Claude, ChatGPT, and Gemini side by side in one tab is something no other tool offers. Absolute game changer."</p><div class="tc-card-author"><img src="https://randomuser.me/api/portraits/women/7.jpg" alt="Aisha Williams"><div><div class="tc-card-name">Aisha Williams</div><div class="tc-card-role">Graduate Researcher</div></div></div></div>
+        <div class="tc-card"><p class="tc-card-text">"Our team adopted BoodleBox in a single afternoon. The interface is intuitive and onboarding is seamless."</p><div class="tc-card-author"><img src="https://randomuser.me/api/portraits/men/8.jpg" alt="Tom Erikson"><div><div class="tc-card-name">Tom Erikson</div><div class="tc-card-role">Creative Director</div></div></div></div>
+        <div class="tc-card"><p class="tc-card-text">"Knowing our data is never used for training was the deciding factor. We trust BoodleBox with sensitive research."</p><div class="tc-card-author"><img src="https://randomuser.me/api/portraits/women/9.jpg" alt="Dr. Lena Fischer"><div><div class="tc-card-name">Dr. Lena Fischer</div><div class="tc-card-role">Research Director, Furman University</div></div></div></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing-sec">
+  <div class="sec-label">Pricing</div>
+  <h2 class="sec-title">The right plan for<br>every team.</h2>
+  <p class="sec-sub">Start free and scale as you grow. No hidden fees, no per-model charges.</p>
+  <div class="pricing-toggle-wrap">
+    <span id="lbl-monthly">Monthly</span>
+    <button class="toggle-pill annual" id="billing-toggle" aria-label="Toggle annual billing"></button>
+    <span id="lbl-annual" class="active">Annual</span>
+    <span class="save-badge">Save 20%</span>
+  </div>
+  <div class="pricing-grid">
+
+    <div class="pricing-card">
+      <div class="pricing-tier">Boodle Basic</div>
+      <div class="pricing-price">Free</div>
+      <div class="pricing-desc">For individuals and students getting started with AI collaboration.</div>
+      <div class="pricing-divider"></div>
+      <ul class="pricing-features">
+        <li>Unlimited AI prompts with Basic Models</li>
+        <li>5 premium AI prompts per day</li>
+        <li>Access to multiple AI models</li>
+        <li>Basic collaboration features</li>
+        <li>Knowledge upload capabilities</li>
+      </ul>
+      <button class="pricing-btn">Get Started</button>
+    </div>
+
+    <div class="pricing-card featured">
+      <div class="pricing-badge">Most Popular</div>
+      <div class="pricing-tier">Boodle Unlimited</div>
+      <div class="pricing-price" id="pro-price">$16 <span>/ mo</span></div>
+      <div class="pricing-desc">$16/mo for Education. Access every model and every feature.</div>
+      <div class="pricing-divider"></div>
+      <ul class="pricing-features">
+        <li>Unlimited premium AI usage</li>
+        <li>Access to all AI models</li>
+        <li>Advanced collaboration features</li>
+        <li>Custom bot creation</li>
+        <li>Priority support</li>
+      </ul>
+      <div class="pricing-quote">
+        <p>"BoodleBox transformed how I approach my studies and made me far more confident using AI ethically."</p>
+        <span>Student, Pikes Peak State College</span>
+      </div>
+      <button class="pricing-btn primary">Go Unlimited</button>
+    </div>
+
+    <div class="pricing-card">
+      <div class="pricing-tier">Boodle Enterprise</div>
+      <div class="pricing-price">Custom</div>
+      <div class="pricing-desc">Comprehensive solutions for campus-wide and enterprise-wide AI literacy initiatives.</div>
+      <div class="pricing-divider"></div>
+      <ul class="pricing-features">
+        <li>Unlimited access for all faculty, staff, and students</li>
+        <li>Enterprise-grade security and compliance</li>
+        <li>Dedicated customer success manager</li>
+        <li>Custom integration with your LMS</li>
+        <li>Advanced analytics and reporting</li>
+        <li>Priority support and training</li>
+      </ul>
+      <button class="pricing-btn">Custom Pricing</button>
+    </div>
+
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-sec">
+  <div class="cta-inner">
+    <h2>AI collaboration,<br><span class="grad">built for teams and classrooms.</span></h2>
+    <p>Join the waitlist and be first to access the platform that brings every AI model together in one workspace.</p>
+    <div class="cta-form">
+      <input class="cta-input" type="email" placeholder="Enter your email">
+      <button class="btn" style="border-radius:12px;padding:13px 28px;white-space:nowrap">Get Early Access</button>
+    </div>
+    <p class="cta-hint">No credit card required &nbsp;·&nbsp; Free plan available</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top sec-wrap">
+    <div class="footer-brand">
+      <div class="wordmark"><img src="boodlebox-logo-light.png" alt="BoodleBox"></div>
+      <p>The AI platform built for teams and classrooms who need every model, not just one.</p>
+    </div>
+    <div class="footer-cols">
+      <div class="footer-col">
+        <h5>Product</h5>
+        <a href="#">Features</a>
+        <a href="#">Pricing</a>
+        <a href="#">Changelog</a>
+        <a href="#">Roadmap</a>
+      </div>
+      <div class="footer-col">
+        <h5>Company</h5>
+        <a href="#">About</a>
+        <a href="#">Blog</a>
+        <a href="#">Careers</a>
+        <a href="#">Press</a>
+      </div>
+      <div class="footer-col">
+        <h5>Resources</h5>
+        <a href="#">Documentation</a>
+        <a href="#">Guides</a>
+        <a href="#">API</a>
+        <a href="#">Status</a>
+      </div>
+      <div class="footer-col">
+        <h5>Legal</h5>
+        <a href="#">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="#">Security</a>
+        <a href="#">Cookies</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom sec-wrap">
+    <span>© 2026 BoodleBox · boodlebox.ai</span>
+    <span>Made for educators, teams &amp; the curious.</span>
+  </div>
+</footer>
+
+<script src="three.min.js"></script>
+<script>
+  const TOTAL = 48;
+  const frames = new Array(TOTAL);
+  let loaded = 0, ready = false;
+
+  // ── Three.js setup ────────────────────────────────
+  const canvas   = document.getElementById('bot-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  const scene  = new THREE.Scene();
+  const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+  const off = document.createElement('canvas');
+  off.width = off.height = 1000;
+  const ctx2d = off.getContext('2d');
+
+  const tex = new THREE.CanvasTexture(off);
+  tex.minFilter = tex.magFilter = THREE.LinearFilter;
+
+  // Luma-key shader strips the baked-in white background
+  const mat = new THREE.ShaderMaterial({
+    transparent: true,
+    uniforms: { map: { value: tex } },
+    vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=vec4(position,1.0); }`,
+    fragmentShader: `
+      uniform sampler2D map;
+      varying vec2 vUv;
+      void main(){
+        vec4 c = texture2D(map, vUv);
+        float w = min(c.r, min(c.g, c.b));
+        float a = 1.0 - smoothstep(0.88, 0.96, w);
+        gl_FragColor = vec4(c.rgb, a);
+      }
+    `
+  });
+
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat);
+  scene.add(mesh);
+
+  function sizeCanvas() {
+    const panel = document.querySelector('.bot-panel');
+    const s = Math.round(Math.min(panel.clientHeight * 0.80, panel.clientWidth * 0.84));
+    renderer.setSize(s, s);
+  }
+  sizeCanvas();
+  window.addEventListener('resize', () => { sizeCanvas(); });
+
+  // ── Frame rendering ───────────────────────────────
+  let shown = 0, target = 0;
+
+  function drawFrame(i) {
+    const img = frames[i];
+    if (!img?.complete) return;
+    ctx2d.clearRect(0, 0, 1000, 1000);
+    ctx2d.drawImage(img, 0, 0, 1000, 1000);
+    tex.needsUpdate = true;
+    shown = i;
+  }
+
+  // Render loop — lerp toward target for smooth frame transitions
+  let shownF = 0; // floating-point frame index for smooth interpolation
+  (function loop() {
+    requestAnimationFrame(loop);
+    if (!ready) return;
+    shownF += (target - shownF) * 0.055;
+    const next = Math.round(shownF);
+    if (next !== shown) drawFrame(next);
+    renderer.render(scene, camera);
+  })();
+
+  // ── Preload all frames ────────────────────────────
+  const lpct = document.getElementById('lpct');
+  for (let i = 0; i < TOTAL; i++) {
+    const img = new Image();
+    img.src = `frames/frame${String(i + 1).padStart(4, '0')}.jpg`;
+    frames[i] = img;
+    const onDone = () => {
+      loaded++;
+      lpct.textContent = `Powering up BoodleBot ${Math.round(loaded / TOTAL * 100)}%`;
+      if (loaded === TOTAL) {
+        drawFrame(0);
+        renderer.render(scene, camera);
+        document.getElementById('loader').classList.add('out');
+        setTimeout(() => document.getElementById('loader')?.remove(), 800);
+        ready = true;
+      }
+    };
+    img.onload = img.onerror = onDone;
+  }
+
+  const pfill      = document.getElementById('pfill');
+  const scrollHint = document.getElementById('scroll-hint');
+  const stage      = document.querySelector('.sticky-stage');
+
+  // ── Scroll handler (RAF-throttled) ───────────────
+  const zone = document.getElementById('scroll-zone');
+  let scrollRaf = null;
+
+  function processScroll() {
+    scrollRaf = null;
+    const scrollable = zone.offsetHeight - window.innerHeight;
+    const p = Math.max(0, Math.min(1, (window.scrollY - zone.offsetTop) / scrollable));
+
+    scrollHint.classList.toggle('hidden', p > 0.04);
+
+    // Fade the hero out during the final 15% of the scroll zone
+    const fadeStart = 0.85;
+    stage.style.opacity = p >= fadeStart
+      ? 1 - ((p - fadeStart) / (1 - fadeStart))
+      : '';
+
+    // Animation uses the full scroll zone
+    if (!ready) return;
+    target = Math.round(p * (TOTAL - 1));
+    pfill.style.width = (p * 100) + '%';
+  }
+
+  function onScroll() {
+    if (!scrollRaf) scrollRaf = requestAnimationFrame(processScroll);
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  // ── Pricing toggle ───────────────────────────────
+  (function() {
+    const toggle = document.getElementById('billing-toggle');
+    const proPrice = document.getElementById('pro-price');
+    const lblM = document.getElementById('lbl-monthly');
+    const lblA = document.getElementById('lbl-annual');
+    let annual = true;
+    toggle.addEventListener('click', () => {
+      annual = !annual;
+      toggle.classList.toggle('annual', annual);
+      lblM.classList.toggle('active', !annual);
+      lblA.classList.toggle('active', annual);
+      proPrice.innerHTML = annual ? '$16 <span>/ mo</span>' : '$20 <span>/ mo</span>';
+    });
+  })();
+
+  // ── Floating nav visibility ───────────────────────
+  const floatNav = document.getElementById('float-nav');
+  const topNav   = document.querySelector('body > nav');
+
+  function updateFloatNav() {
+    const zone = document.getElementById('scroll-zone');
+    const pastHero = window.scrollY > zone.offsetTop + zone.offsetHeight - window.innerHeight;
+    floatNav.classList.toggle('visible', pastHero);
+    topNav.style.opacity = pastHero ? '0' : '';
+    topNav.style.pointerEvents = pastHero ? 'none' : '';
+  }
+  window.addEventListener('scroll', updateFloatNav, { passive: true });
+  updateFloatNav();
+</script>
+</body>
+</html>

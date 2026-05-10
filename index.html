@@ -938,22 +938,22 @@
         min-height: 0;
         max-height: 65vh;
       }
-      /* Text panel slides up over the bottom of the robot */
+      /* Text panel slides up 300px over the robot — sits in front of the canvas */
       .text-panel {
         flex: none;
-        padding: 60px 24px 28px;
+        padding: 300px 24px 28px;
         min-height: auto;
         justify-content: flex-start;
-        margin-top: -56px;
+        margin-top: -300px;
         position: relative;
         z-index: 2;
       }
-      /* Gradient dissolve from robot into text panel */
+      /* Gradient dissolve: covers the full 300px intrusion zone */
       .text-panel::before {
         content: '';
         position: absolute;
-        top: 0; left: 0; right: 0; height: 64px;
-        background: linear-gradient(to bottom, transparent, var(--dark) 80%);
+        top: 0; left: 0; right: 0; height: 300px;
+        background: linear-gradient(to bottom, transparent 0%, var(--dark) 65%);
         pointer-events: none;
       }
       .eyebrow { margin-bottom: 12px; font-size: 0.68rem; }

@@ -921,6 +921,58 @@
       .logo-grid, .bento-grid, .pricing-grid { padding: 0 28px; }
       .cta-sec { padding: 20px 28px 80px; }
     }
+
+    /* ── MOBILE (≤768px) ─────────────────────────── */
+    @media (max-width: 768px) {
+      /* Collapse scroll zone — no scroll-driven animation on mobile */
+      #scroll-zone { height: 100vh; }
+
+      /* Flip hero: bot on top, text below — use flex for reliable clamping */
+      .sticky-stage {
+        display: flex;
+        flex-direction: column;
+      }
+      .bot-panel {
+        order: -1;
+        flex: 1 1 0;
+        min-height: 0;
+        max-height: 62vh;
+      }
+      .text-panel {
+        flex: none;
+        padding: 16px 24px 28px;
+        min-height: auto;
+        justify-content: flex-start;
+      }
+      .eyebrow { margin-bottom: 12px; font-size: 0.68rem; }
+      .text-panel h1 { font-size: clamp(1.9rem, 8vw, 2.5rem); margin-bottom: 8px; line-height: 1.08; }
+      .text-panel p { display: none; } /* hide body copy — space is tight */
+      .btn { padding: 12px 28px; font-size: 0.9rem; margin-bottom: 0; }
+      .social-proof { margin-top: 14px; gap: 10px; }
+      .avatar-stack img { width: 30px; height: 30px; }
+      .proof-label { font-size: 0.7rem; }
+
+      /* No bottom gradient fade on mobile */
+      .sticky-stage::after { display: none; }
+
+      /* Hide desktop-only controls */
+      .bot-prog { display: none; }
+      .scroll-hint { display: none; }
+
+      /* Remove the negative pull — logo strip starts normally */
+      .logo-strip { margin-top: 0; }
+      .logo-strip::before { display: none; }
+
+      /* Misc section tweaks */
+      .feat-grid { grid-template-columns: 1fr; }
+      .sec-heading { font-size: clamp(1.8rem, 7vw, 2.6rem); }
+    }
+
+    @media (max-width: 480px) {
+      .tc-sec { padding: 70px 0; }
+      nav { padding: 14px 20px; }
+      .nav-btn { padding: 8px 18px; font-size: 0.8rem; }
+    }
   </style>
 </head>
 <body>
@@ -1548,12 +1600,16 @@
     shown = i;
   }
 
+  // ── Mobile detection (declared early — used in load callback) ──
+  const isMobile = window.innerWidth <= 768;
+
   // Render loop — lerp toward target for smooth frame transitions
   let shownF = 0; // floating-point frame index for smooth interpolation
+  let lerpSpeed = 0.055;
   (function loop() {
     requestAnimationFrame(loop);
     if (!ready) return;
-    shownF += (target - shownF) * 0.055;
+    shownF += (target - shownF) * lerpSpeed;
     const next = Math.round(shownF);
     if (next !== shown) drawFrame(next);
     renderer.render(scene, camera);
@@ -1574,6 +1630,7 @@
         document.getElementById('loader').classList.add('out');
         setTimeout(() => document.getElementById('loader')?.remove(), 800);
         ready = true;
+        if (isMobile) runMobileAnimation();
       }
     };
     img.onload = img.onerror = onDone;
@@ -1583,7 +1640,36 @@
   const scrollHint = document.getElementById('scroll-hint');
   const stage      = document.querySelector('.sticky-stage');
 
-  // ── Scroll handler (RAF-throttled) ───────────────
+  // ── Mobile auto-animation (forward → backward → stop) ───
+  function runMobileAnimation() {
+    lerpSpeed = 0.18; // faster lerp so animation feels snappy
+    let frameIdx = 0;
+    let direction = 1;
+    const frameInterval = 75; // ms between frame steps
+
+    function step() {
+      target = frameIdx;
+      frameIdx += direction;
+
+      if (frameIdx >= TOTAL) {
+        // Reached last frame — reverse
+        frameIdx = TOTAL - 1;
+        direction = -1;
+        setTimeout(step, frameInterval);
+      } else if (frameIdx < 0) {
+        // Reached first frame — stop
+        target = 0;
+        lerpSpeed = 0.055;
+      } else {
+        setTimeout(step, frameInterval);
+      }
+    }
+
+    // Small delay after load so user sees first frame before animation starts
+    setTimeout(step, 400);
+  }
+
+  // ── Scroll handler (RAF-throttled) — desktop only ─
   const zone = document.getElementById('scroll-zone');
   let scrollRaf = null;
 
@@ -1610,7 +1696,9 @@
     if (!scrollRaf) scrollRaf = requestAnimationFrame(processScroll);
   }
 
-  window.addEventListener('scroll', onScroll, { passive: true });
+  if (!isMobile) {
+    window.addEventListener('scroll', onScroll, { passive: true });
+  }
 
   // ── Pricing toggle ───────────────────────────────
   (function() {

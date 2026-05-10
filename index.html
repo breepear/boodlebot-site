@@ -936,13 +936,25 @@
         order: -1;
         flex: 1 1 0;
         min-height: 0;
-        max-height: 62vh;
+        max-height: 65vh;
       }
+      /* Text panel slides up over the bottom of the robot */
       .text-panel {
         flex: none;
-        padding: 16px 24px 28px;
+        padding: 60px 24px 28px;
         min-height: auto;
         justify-content: flex-start;
+        margin-top: -56px;
+        position: relative;
+        z-index: 2;
+      }
+      /* Gradient dissolve from robot into text panel */
+      .text-panel::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 64px;
+        background: linear-gradient(to bottom, transparent, var(--dark) 80%);
+        pointer-events: none;
       }
       .eyebrow { margin-bottom: 12px; font-size: 0.68rem; }
       .text-panel h1 { font-size: clamp(1.9rem, 8vw, 2.5rem); margin-bottom: 8px; line-height: 1.08; }
@@ -951,6 +963,21 @@
       .social-proof { margin-top: 14px; gap: 10px; }
       .avatar-stack img { width: 30px; height: 30px; }
       .proof-label { font-size: 0.7rem; }
+
+      /* ── Mobile nav: hide desktop elements, show hamburger ── */
+      nav .nav-btn { display: none; }
+      .hamburger { display: flex; }
+      #float-nav .fn-links,
+      #float-nav .fn-actions { display: none; }
+      #float-nav .fn-hamburger { display: flex; }
+      #float-nav {
+        left: auto; right: 18px;
+        transform: translateY(-12px);
+        padding: 8px 10px 8px 14px;
+      }
+      #float-nav.visible {
+        transform: translateY(0);
+      }
 
       /* No bottom gradient fade on mobile */
       .sticky-stage::after { display: none; }
@@ -971,7 +998,125 @@
     @media (max-width: 480px) {
       .tc-sec { padding: 70px 0; }
       nav { padding: 14px 20px; }
-      .nav-btn { padding: 8px 18px; font-size: 0.8rem; }
+    }
+
+    /* ── HAMBURGER BUTTON ───────────────────────────── */
+    .hamburger {
+      display: none; /* shown only on mobile via media query above */
+      align-items: center; justify-content: center;
+      flex-direction: column; gap: 5px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 10px;
+      padding: 9px 11px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .hamburger span {
+      display: block;
+      width: 20px; height: 2px;
+      background: #fff; border-radius: 1px;
+      transition: transform 0.25s ease, opacity 0.2s ease;
+    }
+    /* X state when menu is open */
+    body.menu-open .hamburger span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    body.menu-open .hamburger span:nth-child(2) { opacity: 0; }
+    body.menu-open .hamburger span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    .fn-hamburger {
+      display: none;
+      margin-left: 10px;
+    }
+
+    /* ── MOBILE MENU OVERLAY ───────────────────────── */
+    #mobile-menu {
+      position: fixed; inset: 0;
+      background: rgba(8,6,20,0.97);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      z-index: 490;
+      display: flex; flex-direction: column;
+      padding: 0 28px max(52px, env(safe-area-inset-bottom));
+      transform: translateX(100%);
+      transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #mobile-menu.open { transform: translateX(0); }
+
+    .mm-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: max(22px, env(safe-area-inset-top)) 0 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      margin-bottom: 40px;
+      flex-shrink: 0;
+    }
+    .mm-header img { height: 26px; width: auto; }
+    .mm-close-btn {
+      width: 40px; height: 40px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 50%;
+      color: #fff; font-size: 1rem; line-height: 1;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
+    }
+    .mm-close-btn:hover { background: rgba(255,255,255,0.14); }
+
+    .mm-links {
+      display: flex; flex-direction: column;
+      flex: 1;
+    }
+    .mm-links a {
+      color: rgba(255,255,255,0.9);
+      text-decoration: none;
+      font-size: 2rem; font-weight: 800;
+      letter-spacing: -0.03em; line-height: 1;
+      padding: 18px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      display: flex; align-items: center; justify-content: space-between;
+      transition: color 0.2s;
+    }
+    .mm-links a::after {
+      content: '↗';
+      font-size: 1.1rem; font-weight: 400;
+      color: rgba(255,255,255,0.25);
+      transition: color 0.2s, transform 0.2s;
+    }
+    .mm-links a:hover { color: #fff; }
+    .mm-links a:hover::after { color: var(--purple); transform: translate(2px,-2px); }
+
+    .mm-actions {
+      display: flex; flex-direction: column; gap: 12px;
+      padding-top: 32px;
+      flex-shrink: 0;
+    }
+    .mm-cta {
+      display: block; text-align: center;
+      background: #9981e2;
+      color: #fff; border: none;
+      padding: 16px; border-radius: 100px;
+      font-size: 1rem; font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 0 36px rgba(124,92,252,0.35);
+    }
+    .mm-secondary {
+      display: block; text-align: center;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.8); border-radius: 100px;
+      padding: 15px; font-size: 1rem; font-weight: 600;
+      cursor: pointer;
+    }
+    /* Staggered link entrance animation */
+    #mobile-menu.open .mm-links a {
+      animation: mmSlideIn 0.4s cubic-bezier(0.16,1,0.3,1) both;
+    }
+    #mobile-menu.open .mm-links a:nth-child(1) { animation-delay: 0.06s; }
+    #mobile-menu.open .mm-links a:nth-child(2) { animation-delay: 0.12s; }
+    #mobile-menu.open .mm-links a:nth-child(3) { animation-delay: 0.18s; }
+    @keyframes mmSlideIn {
+      from { opacity: 0; transform: translateX(28px); }
+      to   { opacity: 1; transform: translateX(0); }
     }
   </style>
 </head>
@@ -989,6 +1134,9 @@
 <nav>
   <div class="wordmark"><img src="boodlebox-logo-light.png" alt="BoodleBox"></div>
   <button class="nav-btn">Get Started Free</button>
+  <button class="hamburger" id="hamburger-hero" aria-label="Open menu">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
 
 <!-- FLOATING NAV -->
@@ -1002,6 +1150,26 @@
   <div class="fn-actions">
     <button class="fn-signup">Sign Up</button>
     <button class="fn-login">Login</button>
+  </div>
+  <button class="hamburger fn-hamburger" id="hamburger-float" aria-label="Open menu">
+    <span></span><span></span><span></span>
+  </button>
+</div>
+
+<!-- MOBILE MENU OVERLAY -->
+<div id="mobile-menu" aria-hidden="true">
+  <div class="mm-header">
+    <img src="boodlebox-logo-light.png" alt="BoodleBox">
+    <button class="mm-close-btn" id="mm-close" aria-label="Close menu">✕</button>
+  </div>
+  <div class="mm-links">
+    <a href="#">Features</a>
+    <a href="#">About</a>
+    <a href="#">Blog</a>
+  </div>
+  <div class="mm-actions">
+    <button class="mm-cta">Start for Free</button>
+    <button class="mm-secondary">Sign In</button>
   </div>
 </div>
 
@@ -1713,6 +1881,43 @@
       lblM.classList.toggle('active', !annual);
       lblA.classList.toggle('active', annual);
       proPrice.innerHTML = annual ? '$16 <span>/ mo</span>' : '$20 <span>/ mo</span>';
+    });
+  })();
+
+  // ── Mobile menu ──────────────────────────────────
+  (function() {
+    const menu    = document.getElementById('mobile-menu');
+    const closeBtn = document.getElementById('mm-close');
+    const triggers = [
+      document.getElementById('hamburger-hero'),
+      document.getElementById('hamburger-float'),
+    ];
+
+    function openMenu() {
+      menu.classList.add('open');
+      menu.setAttribute('aria-hidden', 'false');
+      document.body.classList.add('menu-open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeMenu() {
+      menu.classList.remove('open');
+      menu.setAttribute('aria-hidden', 'true');
+      document.body.classList.remove('menu-open');
+      document.body.style.overflow = '';
+    }
+
+    triggers.forEach(btn => btn && btn.addEventListener('click', openMenu));
+    closeBtn.addEventListener('click', closeMenu);
+
+    // Close on overlay click (outside the menu content)
+    menu.addEventListener('click', e => { if (e.target === menu) closeMenu(); });
+
+    // Close on Escape key
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenu(); });
+
+    // Close menu items auto-close
+    menu.querySelectorAll('.mm-links a, .mm-cta, .mm-secondary').forEach(el => {
+      el.addEventListener('click', closeMenu);
     });
   })();
 

@@ -118,7 +118,7 @@
     .fn-login:hover { background: #8570d4; transform: translateY(-1px); }
 
     /* ── SCROLL ZONE — the hero ──────────────────── */
-    #scroll-zone { position: relative; height: 200vh; }
+    #scroll-zone { position: relative; height: 150vh; }
 
     .sticky-stage {
       position: sticky; top: 0; height: 100vh;
@@ -351,15 +351,15 @@
 
     /* ── LOGO STRIP ──────────────────────────────── */
     .logo-strip {
-      padding: 80px 0 90px;
-      margin-top: -480px;
+      padding: 40px 0 90px;
+      margin-top: -1100px;
       position: relative; z-index: 1;
     }
     .logo-strip::before {
       content: '';
       position: absolute; top: 0; left: 0; right: 0;
-      height: 200px;
-      background: linear-gradient(to bottom, var(--dark), transparent);
+      height: 500px;
+      background: linear-gradient(to bottom, var(--dark) 30%, transparent);
       pointer-events: none; z-index: 2;
     }
     .logo-strip p {
@@ -1788,7 +1788,7 @@
 
   // Render loop — lerp toward target for smooth frame transitions
   let shownF = 0; // floating-point frame index for smooth interpolation
-  let lerpSpeed = 0.055;
+  let lerpSpeed = 0.08;
   (function loop() {
     requestAnimationFrame(loop);
     if (!ready) return;

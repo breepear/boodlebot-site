@@ -924,13 +924,15 @@
 
     /* ── MOBILE (≤768px) ─────────────────────────── */
     @media (max-width: 768px) {
-      /* Collapse scroll zone — no scroll-driven animation on mobile */
-      #scroll-zone { height: 100vh; }
+      /* No scroll-driven animation on mobile — let hero be content height */
+      #scroll-zone { height: auto; }
 
       /* Flip hero: bot on top, text below — use flex for reliable clamping */
       .sticky-stage {
         display: flex;
         flex-direction: column;
+        position: relative;
+        height: auto;
       }
       .bot-panel {
         order: -1;
@@ -963,7 +965,7 @@
       .text-panel h1 { font-size: clamp(1.9rem, 8vw, 2.5rem); margin-bottom: 8px; line-height: 1.08; }
       .text-panel p { display: block; font-size: 0.88rem; line-height: 1.6; margin-bottom: 18px; max-width: 100%; }
       .btn { padding: 12px 28px; font-size: 0.9rem; margin-bottom: 0; }
-      .social-proof { margin-top: 14px; gap: 10px; }
+      .social-proof { margin-top: 14px; gap: 10px; margin-bottom: 48px; }
       .avatar-stack img { width: 30px; height: 30px; }
       .proof-label { font-size: 0.7rem; }
 
@@ -989,9 +991,18 @@
       .bot-prog { display: none; }
       .scroll-hint { display: none; }
 
+      /* Bigger background gradient centered on the text area */
+      .sticky-stage {
+        background:
+          radial-gradient(ellipse 160% 60% at 50% 95%, rgba(44,18,110,0.6) 0%, transparent 65%),
+          radial-gradient(ellipse 50% 55% at 90% 20%, rgba(0,180,160,0.05) 0%, transparent 55%),
+          var(--dark);
+      }
+
       /* Remove the negative pull — logo strip starts normally */
-      .logo-strip { margin-top: 0; }
+      .logo-strip { margin-top: 0; padding-top: 36px; padding-bottom: 40px; }
       .logo-strip::before { display: none; }
+      .security-sec { padding-top: 48px; }
 
       /* Misc section tweaks */
       .feat-grid { grid-template-columns: 1fr; }
